@@ -94,6 +94,7 @@ R1#
 *Sep 15 19:08:47.015: %LINK-3-UPDOWN: Interface GigabitEthernet0/0/1, changed state to down
 *Sep 15 19:08:50.071: %LINK-3-UPDOWN: Interface GigabitEthernet0/0/1, changed state to up
 *Sep 15 19:08:51.071: %LINEPROTO-5-UPDOWN: Line protocol on Interface GigabitEthernet0/0/1, changed state to up
+
 ----------- Router - configure to not resolve domain names
 
 Router1# configure terminal
@@ -142,6 +143,13 @@ ip route 10.0.4.0 255.255.255.0 10.0.3.2
          
 
 ----------- Verify IP route -------------------
+
+    L - Identifies the address assigned to a router interface. This allows the router to efficiently determine when it receives a packet for the interface instead of being forwarded.
+    C - Identifies a directly connected network.
+    S - Identifies a static route created to reach a specific network.
+    O - Identifies a dynamically learned network from another router using the OSPF routing protocol.
+    * - This route is a candidate for a default route.
+
 
 R1# show ip route
 Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP

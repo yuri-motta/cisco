@@ -1,0 +1,173 @@
+----------- configure Router ID for OSPF ---------
+R1(config)# router ospf 10
+R1(config-router)# router-id 1.1.1.1
+R1(config-router)# end
+*May 23 19:33:42.689: %SYS-5-CONFIG_I: Configured from console by console
+R1# show ip protocols | include Router ID
+Router ID 1.1.1.1
+
+----------- Modify Router ID after it was configured ------------
+R1# show ip protocols | include Router ID
+Router ID 10.10.1.1
+R1# conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+R1(config)# router ospf 10
+R1(config-router)# router-id 1.1.1.1
+% OSPF: Reload or use "clear ip ospf process" command, for this to take effect
+R1(config-router)# end
+R1# clear ip ospf process
+Reset ALL OSPF processes? [no]: y
+*Jun  6 01:09:46.975: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 on GigabitEthernet0/0/1 from FULL to DOWN, Neighbor Down: Interface down or detached
+*Jun  6 01:09:46.975: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 on GigabitEthernet0/0/0 from FULL to DOWN, Neighbor Down: Interface down or detached
+*Jun  6 01:09:46.981: %OSPF-5-ADJCHG: Process 10, Nbr 3.3.3.3 on GigabitEthernet0/0/1 from LOADING to FULL, Loading Done
+*Jun  6 01:09:46.981: %OSPF-5-ADJCHG: Process 10, Nbr 2.2.2.2 on GigabitEthernet0/0/0 from LOADING to FULL, Loading Done
+R1# show ip protocols | include Router ID
+Router ID 1.1.1.1
+R1#
+
+
+-------------- configure ospf using network command ---------
+note- Router(config-router)# network network-address wildcard-mask area area-id
+
+R1(config)# router ospf 10
+R1(config-router)# network 10.10.1.0 0.0.0.255 area 0
+R1(config-router)# network 10.1.1.4 0.0.0.3 area 0
+R1(config-router)# network 10.1.1.12 0.0.0.3 area 0
+R1(config-router)#
+
+------------- clear ospf process ---------------
+R1# clear ip ospf process
+
+------------- verify ospf roles ---------------
+Note - DR (Desiginated Router) BDR (Backup designated router) DR (Drother - neither DR or BDR)
+The highest priority makes the Router DR 0-255. Default is 1.
+If no priority, the highest router ID makes DR in the election process.
+If no Router ID, it becomes the higher IP becomes DR.
+R1# show ip ospf interface
+
+
+------------- change ospf priority --------------
+Example:
+    R1 should be the DR and will be configured with a priority of 255.
+    R2 should be the BDR and will be left with the default priority of 1.
+    R3 should never be a DR or BDR and will be configured with a priority of 0.
+
+Change the R1 G0/0/0 interface priority from 1 to 255.
+R1(config)# interface GigabitEthernet 0/0/0
+R1(config-if)# ip ospf priority 255
+R1(config-if)# end 
+
+Change the R3 G0/0/0 interface priority from 1 to 0.
+R3(config)# interface GigabitEthernet 0/0/0
+R3(config-if)# ip ospf priority 0
+R3(config-if)# end
+R3#
+
+Clear ospf process in R1 and R3
+R1# clear ip ospf process
+
+R3# clear ip ospf process
+------------- verify DR/BDR Adjacencies ----------
+show ip ospf neighbor
+
+-------------- calculating wild card mask
+
+The easiest method for calculating a wildcard mask is to subtract the network subnet mask from 255.255.255.255
+Ex:
+/24 subnet mask 255.255.255.0
+wildcard mask = (255-255).(255-255).(255-255).(255-0)
+wildcard mask = 0.0.0.0
+
+/28 = 255.255.255.240
+wildcard mask = (255-255).(255-255).(255-255).(255-240)
+wildcard mask = 0.0.0.15
+
+-------------- Adjust reference bandwidth cost for OSPF ----------- 
+Note - Default formula is 10^8 / bandwidth is Mbps
+Ex: 10 Gbps is: 10^8 / 10^10 = 0.01 => 1
+    1 Gbps is: 10^8 / 10^9 = 0.1 => 1
+    100 Mbos is: 10^8 / 10^8 = 1
+
+The default does not differentiate Gbps from Mbps. To adjust for example to the lowest cost for 10Gbps you can use this:
+Router(config-router)# auto-cost reference-bandwidth Mbps
+auto-cost reference-bandwidth 10000
+This way 
+10Gbps cost = 1
+1Gbps cost = 10
+100 Mbps cost = 100
+10 Mbps cost = 1000
+
+--------------- Verify cost of ip ospf interface --------------
+G/0/0
+show ip ospf interface gigabitethernet0/0/0
+
+--------------- Example of checking the cost of OSPF route --------
+R1# show ip route | include 10.10.2.0
+O        10.10.2.0/24 [110/11] via 10.1.1.6, 01:05:02, GigabitEthernet0/0/0
+R1# show ip route 10.10.2.0
+Routing entry for 10.10.2.0/24
+  Known via "ospf 10", distance 110, metric 11, type intra area
+  Last update from 10.1.1.6 on GigabitEthernet0/0/0, 01:05:13 ago
+  Routing Descriptor Blocks:
+  * 10.1.1.6, from 2.2.2.2, 01:05:13 ago, via GigabitEthernet0/0/0
+      Route metric is 11, traffic share count is 1
+
+
+----------- Manually changing ospf cost -----------------
+Note: Changing the cost of link may have undesired consequences. 
+Therefore, adjusting interface cost values should only be configured when the outcome is fully understood.
+Example:
+The administrator may want traffic to go through R2 and use R3 as a backup route in case the link between R1 and R2 goes down.
+R1(config)# interface g0/0/1
+R1(config-if)# ip ospf cost 30
+R1(config-if)# interface lo0
+R1(config-if)# ip ospf cost 10
+R1(config-if)# end
+
+
+----------- Hello packets interval OSPF ----------------------
+Note - OSPFv2 Hello packets are transmitted to multicast address 224.0.0.5 (all OSPF routers) every 10 seconds
+Note - The Dead interval is the period that the router waits to receive a Hello packet before declaring the neighbor down. Cisco uses a default of 4 times the Hello interval. This is 40 seconds on multiaccess and point-to-point networks.
+
+To verify the currently configured OSPFv2 interface intervals, use:
+show ip ospf interface 
+
+Use the show ip ospf neighbor command to see the Dead Time counting down from 40 seconds,
+
+Note: The default Hello and Dead intervals are based on best practices and should only be altered in rare situations
+
+Example:
+Router(config-if)# ip ospf hello-interval seconds
+Router(config-if)# ip ospf dead-interval seconds
+Use the no ip ospf hello-interval and no ip ospf dead-interval commands to reset the intervals to their default.
+
+
+---------- Propagate a Default Static Route in OSPFv2 --------------
+To propagate a default route, the edge router (R2) must be configured with the following:
+
+    A default static route using the ip route 0.0.0.0 0.0.0.0 [next-hop-address | exit-intf] command.
+    The default-information originate router configuration command. This instructs R2 to be the source of the default route information and propagate the default static route in OSPF updates.
+n the following example, R2 is configured with a loopback to simulate a connection to the internet. Then a default route is configured and propagated to all other OSPF routers in the routing domain.
+
+R2(config)# interface lo1
+R2(config-if)# ip address 64.100.0.1 255.255.255.252
+R2(config-if)# exit
+R2(config)# ip route 0.0.0.0 0.0.0.0 loopback 1
+%Default route without gateway, if not a point-to-point interface, may impact performance
+R2(config)# router ospf 10
+R2(config-router)# default-information originate
+R2(config-router)# end
+
+
+------------- Useful commands for OSPF T/S-----------------
+
+
+show ip interface brief - This verifies that the desired interfaces are active with correct IP addressing.
+show ip route- This verifies that the routing table contains all the expected routes.
+
+Additional commands for determining that OSPF is operating as expected include the following:
+
+show ip ospf neighbor
+show ip protocols
+show ip ospf
+show ip ospf interface
