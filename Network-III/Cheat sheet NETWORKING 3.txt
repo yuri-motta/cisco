@@ -1,0 +1,86 @@
+Cheat sheet NETWORKING 3
+------------------ STATIC NAT
+
+ip nat inside source static 192.168.10.254 209.165.201.5
+
+int s0/1/0
+ip address 192.168.1.2 255.255.255.252
+ip nat inside
+no sh
+
+int s0/1/1
+ip address 209.165.200.1 255.255.255.252
+ip nat outside
+no sh
+
+
+show ip nat translations
+
+clear ip nat statistics
+
+
+show ip nat statistics
+
+
+
+------------ DYNAMIC NAT
+
+# starting IPv4 address and ending IPv4 address. netmask is just subnet mask of the network thoses addresses belong to.
+
+ip nat pool NAT-POOL1 209.165.200.226 209.165.200.240 netmask 255.255.255.224
+
+
+# define which addresses will be translated to the pool. using a standard ACL.
+access-list 1 permit 192.168.0.0 0.0.255.255
+
+# bind ACL to the pool
+ip nat inside source list 1 pool NAT-POOL1
+
+
+#identify inside interface (same as static)
+int s0/1/0
+ip nat inside
+
+#identify outside interface
+int s0/1/1
+ip nat outside
+
+#verify translations
+show ip nat translations
+
+#verify verbose (show how long it will last and how long ago it was created)
+show ip nat translation verbose
+
+# clear the translation
+clear ip nat translation *
+show ip nat translation
+
+# display number of total active translations
+show ip nat statistics
+
+
+
+------------- PAT 
+*****To configure PAT to use a single IPv4 address, simply add the keyword overload to the ip nat inside source command. The rest of the configuration is the similar to static and dynamic NAT configuration except that with PAT, multiple hosts can use the same public IPv4 address to access the internet.*****
+
+access-list 1 permit 192.168.0.0 0.0.255.255
+ip nat inside source list 1 int serial 0/1/1 overload
+int s0/1/0
+ip nat inside
+int s0/1/1
+ip nat ouside
+
+
+
+------ PAT with address pool
+
+ip nat pool NAT-POOL2 209.165.200.226 209.165.200.240 netmask 255.255.255.224
+access-list 1 permit 192.168.0.0 0.0.255.255
+ip nat inside source list 1 pool NAT-POOL2 overload
+
+int s0/1/0
+ip nat inside
+
+int s0/1/1
+ip nat outside
+

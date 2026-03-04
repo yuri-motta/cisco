@@ -76,7 +76,7 @@ The easiest method for calculating a wildcard mask is to subtract the network su
 Ex:
 /24 subnet mask 255.255.255.0
 wildcard mask = (255-255).(255-255).(255-255).(255-0)
-wildcard mask = 0.0.0.0
+wildcard mask = 0.0.0.255
 
 /28 = 255.255.255.240
 wildcard mask = (255-255).(255-255).(255-255).(255-240)
@@ -171,3 +171,21 @@ show ip ospf neighbor
 show ip protocols
 show ip ospf
 show ip ospf interface
+
+
+------------ Building ACLs-----------------------------------
+R1(config)# access-list 10 permit 192.168.10.10 0.0.0.0
+R1(config)# access-list 11 permit 0.0.0.0 255.255.255.255
+
+or 
+
+R1(config)# access-list 10 permit host 192.168.10.10
+R1(config)# access-list 11 permit any
+
+interface GigabitEthernet0/0
+ip access-group 10 in
+
+
+
+
+
