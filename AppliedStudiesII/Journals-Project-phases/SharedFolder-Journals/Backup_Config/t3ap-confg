@@ -1,0 +1,154 @@
+
+!
+! Last configuration change at 00:02:02 UTC Mon Mar 1 1993
+version 15.3
+no service pad
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+no service dhcp
+!
+hostname T3AP
+!
+!
+logging rate-limit console 9
+enable secret 5 $1$3/e0$PTMNQ8KKO0mhJZo4EGfpg.
+!
+aaa new-model
+!
+!
+aaa group server radius T3Radius
+ server 192.168.143.5
+ server 192.168.143.5 auth-port 1812 acct-port 1813
+ server name Team3DC1
+!
+!
+!
+!
+!
+!
+aaa session-id common
+no ip source-route
+no ip cef
+ip domain name T3.AppStd.com
+!
+!
+!
+!
+dot11 pause-time 100
+dot11 syslog
+!
+dot11 ssid T3AppStd
+   authentication open 
+   authentication key-management wpa version 2
+   accounting radius
+   guest-mode
+!
+!
+!
+no ipv6 cef
+!
+crypto pki trustpoint TP-self-signed-3696695468
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-3696695468
+ revocation-check none
+ rsakeypair TP-self-signed-3696695468
+!
+!
+crypto pki certificate chain TP-self-signed-3696695468
+ certificate self-signed 01
+  3082022B 30820194 A0030201 02020101 300D0609 2A864886 F70D0101 05050030 
+  31312F30 2D060355 04031326 494F532D 53656C66 2D536967 6E65642D 43657274 
+  69666963 6174652D 33363936 36393534 3638301E 170D3933 30333031 30303035 
+  33385A17 0D333030 31303130 30303030 305A3031 312F302D 06035504 03132649 
+  4F532D53 656C662D 5369676E 65642D43 65727469 66696361 74652D33 36393636 
+  39353436 3830819F 300D0609 2A864886 F70D0101 01050003 818D0030 81890281 
+  8100B74C 92910A7B 1548BA9F 99C76A75 D4768BF3 36F5A559 831D28EE 580B4992 
+  9F40EDAD D1F952B2 17ECD090 FF276491 981DDFF6 A10690B0 B615E112 75F7B021 
+  8BF084E5 DE868F3C 63D942EC EDBE87E9 D16CEE82 76A88F70 4C179852 592F3975 
+  03235726 120676CE D8A9B9E9 DB7BBA8E 10A62E7F 2544F757 DCECF58C 74C4F5C0 
+  C74B0203 010001A3 53305130 0F060355 1D130101 FF040530 030101FF 301F0603 
+  551D2304 18301680 14A63733 495BEA1D 85923448 620E0192 748C7113 95301D06 
+  03551D0E 04160414 A6373349 5BEA1D85 92344862 0E019274 8C711395 300D0609 
+  2A864886 F70D0101 05050003 8181009D 2DDC0653 96A1D141 3EA1A261 C9036351 
+  5D9139CF 9CE22C66 7EB3C551 CAEFC67F 56DC92FC EFD6EF04 A358247B B691E751 
+  EA91DE0D BC752A2B EAB2F2F5 836A0496 6B80A534 548F0A70 8510C8E2 D934FAF9 
+  544A3B28 EE8F1D6B C2B39730 153A4A97 F19C324C 2E57583E 20FEAE2C 564673F8 
+  D5A754CE AF4BF445 3B69158F 554B02
+  	quit
+username Cisco password 7 096F471A1A0A
+username root privilege 15 secret 5 $1$Ji.1$Ncbs7f9EkrjrCyCIhjF8g.
+!
+!
+bridge irb
+!
+!
+!
+interface Dot11Radio0
+ no ip address
+ shutdown
+ antenna gain 0
+ station-role root
+ bridge-group 1
+ bridge-group 1 subscriber-loop-control
+ bridge-group 1 spanning-disabled
+ bridge-group 1 block-unknown-source
+ no bridge-group 1 source-learning
+ no bridge-group 1 unicast-flooding
+!
+interface Dot11Radio1
+ no ip address
+ !
+ encryption mode ciphers aes-ccm 
+ !
+ ssid T3AppStd
+ !
+ antenna gain 0
+ peakdetect
+ dfs band 3 block
+ power local 11
+ channel dfs
+ station-role root
+ bridge-group 1
+ bridge-group 1 subscriber-loop-control
+ bridge-group 1 spanning-disabled
+ bridge-group 1 block-unknown-source
+ no bridge-group 1 source-learning
+ no bridge-group 1 unicast-flooding
+!
+interface GigabitEthernet0
+ mac-address d072.dc57.18ac
+ ip address 192.168.143.189 255.255.255.0
+ duplex auto
+ speed auto
+ bridge-group 1
+ bridge-group 1 spanning-disabled
+ no bridge-group 1 source-learning
+!
+interface BVI1
+ mac-address d072.dc57.18ac
+ ip address 192.168.143.8 255.255.255.0
+ ipv6 address dhcp
+ ipv6 address autoconfig
+ ipv6 enable
+!
+ip default-gateway 192.168.143.1
+ip forward-protocol nd
+ip http server
+ip http secure-server
+ip http help-path http://www.cisco.com/warp/public/779/smbiz/prodconfig/help/eag
+ip ssh version 2
+!
+logging host 192.168.143.63
+!
+radius-server key 7 106725100E12211E1E022325237A72
+!
+bridge 1 route ip
+!
+!
+!
+line con 0
+line vty 0 4
+ transport input all
+!
+end
